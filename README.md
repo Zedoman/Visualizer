@@ -85,7 +85,7 @@ Before running the application, ensure you have:
 1. **Clone the repository**
 ```bash
 git clone https://github.com/Zedoman/Visualizer
-cd source-code-atlas
+cd Visualizer
 ```
 
 2. **Install dependencies**
