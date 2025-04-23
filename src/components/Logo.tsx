@@ -28,7 +28,7 @@ const Logo: React.FC<LogoProps> = ({ className }) => {
         </div>
 
         {/* Subtle glow effect */}
-        <div className="absolute inset-0 rounded-full bg-atlas-purple opacity-40 blur-sm animate-pulse-slow"></div>
+        <div className="absolute inset-0 rounded-full bg-atlas-black opacity-40 blur-sm animate-pulse-slow"></div>
       </div>
 
       <span className="font-semibold text-lg tracking-tight">
