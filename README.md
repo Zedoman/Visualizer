@@ -84,7 +84,7 @@ Before running the application, ensure you have:
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/Zedoman/Visualizer
 cd source-code-atlas
 ```
 
