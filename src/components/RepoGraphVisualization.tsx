@@ -9,14 +9,20 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   MarkerType,
-  NodeTypes,
+  BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-// Import CSS for the visualization
-import { RepositoryData } from '../services/githubService';
+type RepositoryData = {
+  owner: string;
+  repo: string;
+  structure: any[];
+  fileTypes: string[];
+  fileCount?: number;
+  dirCount?: number;
+  dependencies?: Array<{ name: string; version?: string }>;
+};
 
-// Define node types for better type safety
 type NodeData = {
   label: string;
   type: string;
@@ -36,27 +42,29 @@ const RepoGraphVisualization = ({
   selectedFile,
   onNodeClick
 }: RepoGraphVisualizationProps) => {
-  // Initialize states for nodes and edges
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // Function to handle connections between nodes
   const onConnect = useCallback((params: any) => {
     setEdges((eds) => addEdge({ ...params, animated: true }, eds));
   }, [setEdges]);
 
-  // Handle node click
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     if (onNodeClick) {
       onNodeClick(node);
     }
   }, [onNodeClick]);
 
-  // Generate nodes and edges based on the repository data
+  // Calculate width based on text length
+  const calculateTextWidth = (text: string, fontSize: number, padding: number) => {
+    // Approximate width calculation based on character count and font size
+    const avgCharWidth = fontSize * 0.6; // Rough approximation
+    return Math.ceil(text.length * avgCharWidth + padding * 2);
+  };
+
   useEffect(() => {
     if (!repoData || !repoData.structure) return;
 
-    // Generate nodes and edges differently based on visualization type
     if (visualizationType === 'structure') {
       generateStructureVisualization(repoData.structure);
     } else {
@@ -64,37 +72,39 @@ const RepoGraphVisualization = ({
     }
   }, [repoData, visualizationType, selectedFile]);
 
-  // Generate a visualization of the repository file structure
   const generateStructureVisualization = (structure: any[]) => {
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
     
-    // Create the root node with improved text visibility
+    const repoName = `${repoData.owner}/${repoData.repo}`;
+    const rootNodeWidth = calculateTextWidth(repoName, 16, 24); // fontSize 16, padding 24 (12px each side)
+
     newNodes.push({
       id: 'root',
       data: { 
-        label: `${repoData.owner}/${repoData.repo}`, 
+        label: repoName, 
         type: 'root',
         selected: false
       },
       position: { x: 250, y: 0 },
       style: { 
         background: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))',
-        borderColor: '#8B5CF6', 
-        borderWidth: 2,
+        border: '2px solid #8B5CF6',
         borderRadius: '8px',
-        width: 180,
-        padding: '10px',
-        color: '#FFFFFF', // Bright white text for visibility
+        width: rootNodeWidth,
+        padding: 12,
+        color: '#FFFFFF',
         fontWeight: 'bold',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)' // Added text shadow for contrast
+        fontSize: 16,
+        textAlign: 'center' as const,
+        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        whiteSpace: 'nowrap' as const
       },
     });
 
-    // Increased node/level spacing for better readability
     const addNodesAndEdges = (items: any[], parentId: string, startY: number = 120, startX: number = 0, level: number = 0) => {
-      const nodeSpacing = 230; // was 180, now increased
-      const levelSpacing = 120; // was 100, now increased
+      const nodeSpacing = 330;
+      const levelSpacing = 150;
       
       const levelWidth = items.length * nodeSpacing;
       const startingX = startX - levelWidth / 2 + nodeSpacing / 2;
@@ -102,6 +112,7 @@ const RepoGraphVisualization = ({
       items.forEach((item, index) => {
         const nodeId = item.path || `${parentId}-${index}`;
         const isSelected = selectedFile === item.path;
+        const childWidth = calculateTextWidth(item.name, 12, 16); // fontSize 12, padding 16 (8px each side)
         
         let nodeStyle = {};
         if (item.type === 'directory') {
@@ -110,31 +121,31 @@ const RepoGraphVisualization = ({
             borderColor: isSelected ? '#8B5CF6' : '#8B5CF6',
             borderWidth: isSelected ? 2 : 1,
             borderRadius: '8px',
-            width: 160,
-            padding: '10px',
-            color: '#FFFFFF', // Bright white text
+            width: childWidth,
+            padding: 8,
+            color: '#FFFFFF',
             fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)' // Text shadow for contrast
+            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+            whiteSpace: 'nowrap' as const
           };
         } else {
-          // Color selection based on file type
-          let color = '#94A3B8'; // Default color
-          let textColor = '#FFFFFF'; // Default text color
+          let color = '#94A3B8';
+          let textColor = '#FFFFFF';
           if (item.name.endsWith('.js') || item.name.endsWith('.jsx')) {
-            color = '#F59E0B'; // Yellow for JS
-            textColor = '#000000'; // Black text for better readability
+            color = '#F59E0B';
+            textColor = '#FFFFFF';
           } else if (item.name.endsWith('.ts') || item.name.endsWith('.tsx')) {
-            color = '#3B82F6'; // Blue for TS
+            color = '#3B82F6';
           } else if (item.name.endsWith('.css') || item.name.endsWith('.scss')) {
-            color = '#EC4899'; // Pink for CSS
+            color = '#EC4899';
           } else if (item.name.endsWith('.json')) {
-            color = '#10B981'; // Green for JSON
+            color = '#10B981';
           } else if (item.name.endsWith('.md')) {
-            color = '#6366F1'; // Indigo for MD
+            color = '#6366F1';
           } else if (item.name.endsWith('.py')) {
-            color = '#3B82F6'; // Blue for Python
+            color = '#3B82F6';
           } else if (item.name.endsWith('.rb')) {
-            color = '#EF4444'; // Red for Ruby
+            color = '#EF4444';
           }
           
           nodeStyle = {
@@ -143,11 +154,12 @@ const RepoGraphVisualization = ({
             backgroundColor: isSelected ? `${color}15` : 'transparent',
             boxShadow: isSelected ? `0 0 0 2px ${color}40` : 'none',
             borderRadius: '4px',
-            width: 140,
-            padding: '10px',
-            color: textColor, // Text color for better visibility
+            width: childWidth,
+            padding: 8,
+            color: textColor,
             fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)' // Subtle text shadow
+            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+            whiteSpace: 'nowrap' as const
           };
         }
         
@@ -190,31 +202,32 @@ const RepoGraphVisualization = ({
     setEdges(newEdges);
   };
 
-  // Generate a visualization of the dependencies
   const generateDependencyVisualization = (repoData: RepositoryData) => {
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
     
-    // Create central node for the repo
+    const repoName = `${repoData.owner}/${repoData.repo}`;
+    const rootNodeWidth = calculateTextWidth(repoName, 16, 24);
+
     newNodes.push({
       id: 'main',
-      data: { label: `${repoData.owner}/${repoData.repo}`, type: 'main', selected: false },
-      position: { x: 250, y: 250 },
+      data: { label: repoName, type: 'main', selected: false },
+      position: { x: 175, y: 100 },
       style: { 
         background: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))',
-        borderColor: '#8B5CF6', 
-        borderWidth: 2,
+        border: '2px solid #8B5CF6',
         borderRadius: '50%',
-        width: 150,
-        height: 150,
+        width: rootNodeWidth,
+        height: rootNodeWidth,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        textAlign: 'center',
-        padding: '10px',
-        color: '#FFFFFF', // Bright white text
+        textAlign: 'center' as const,
+        padding: 12,
+        color: '#FFFFFF',
         fontWeight: 'bold',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)' // Text shadow for contrast
+        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        whiteSpace: 'nowrap' as const
       },
     });
     
@@ -226,26 +239,25 @@ const RepoGraphVisualization = ({
       const radius = 250;
       const x = 250 + radius * Math.cos(angle);
       const y = 250 + radius * Math.sin(angle);
+      const extWidth = calculateTextWidth(`.${ext}`, 12, 16);
       
-      let color = '#94A3B8'; // Default gray
-      let textColor = '#FFFFFF'; // Default text color
+      let color = '#94A3B8';
+      let textColor = '#FFFFFF';
       if (['js', 'jsx'].includes(ext)) {
-        color = '#F59E0B'; // Yellow for JS
-        textColor = '#000000'; // Black text for better readability
+        color = '#F59E0B';
+        textColor = '#000000';
       } else if (['ts', 'tsx'].includes(ext)) {
-        color = '#3B82F6'; // Blue for TS
+        color = '#3B82F6';
       } else if (['css', 'scss', 'less'].includes(ext)) {
-        color = '#EC4899'; // Pink for CSS
+        color = '#EC4899';
       } else if (ext === 'json') {
-        color = '#10B981'; // Green for JSON
+        color = '#10B981';
       } else if (ext === 'md') {
-        color = '#6366F1'; // Indigo for MD
+        color = '#6366F1';
       } else if (ext === 'py') {
-        color = '#3B82F6'; // Blue for Python
+        color = '#3B82F6';
       } else if (ext === 'rb') {
-        color = '#EF4444'; // Red for Ruby
-      } else if (['html', 'htm'].includes(ext)) {
-        color = '#F97316'; // Orange for HTML
+        color = '#EF4444';
       }
       
       const isSelected = selectedFile && selectedFile.endsWith(`.${ext}`);
@@ -260,11 +272,12 @@ const RepoGraphVisualization = ({
           borderWidth: isSelected ? 3 : 1,
           boxShadow: isSelected ? `0 0 0 2px ${color}40` : 'none',
           borderRadius: '8px',
-          width: 120,
-          padding: '10px',
-          color: textColor, // Text color for better visibility
+          width: extWidth,
+          padding: 8,
+          color: textColor,
           fontWeight: 'bold',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)' // Subtle text shadow
+          textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+          whiteSpace: 'nowrap' as const
         }
       });
       
@@ -300,8 +313,18 @@ const RepoGraphVisualization = ({
         attributionPosition="bottom-right"
       >
         <Controls />
-        <MiniMap />
-        <Background color="#f8f8f8" gap={16} />
+        <MiniMap 
+          style={{
+            backgroundColor: 'rgba(35, 42, 65, 0.8)',
+            borderRadius: '8px'
+          }}
+          nodeColor={(n) => {
+            if (n.id === 'root') return '#8b5cf6';
+            if (n.data?.type === 'directory') return '#7c3aed';
+            return '#3b82f6';
+          }}
+        />
+        <Background color="#f8f8f8" gap={16} variant={BackgroundVariant.Dots} />
       </ReactFlow>
     </div>
   );
