@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, Filter, ZoomIn, ZoomOut, Maximize, FileText, FileImage, File } from 'lucide-react';
@@ -84,7 +83,6 @@ const Visualization = () => {
     navigate('/');
   };
 
-  // Make sure we're properly handling the case when graphRef is not available
   const exportAsPNG = async () => {
     console.log("Exporting as PNG, graph ref:", graphRef.current);
     if (!graphRef.current) {
@@ -96,17 +94,40 @@ const Visualization = () => {
       return;
     }
     try {
-      // Import html2canvas dynamically
       const html2canvasModule = await import('html2canvas');
       const html2canvas = html2canvasModule.default;
       
-      // Create a canvas from the graph element
-      const canvas = await html2canvas(graphRef.current, {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const reactFlowContainer = graphRef.current.querySelector('.react-flow') as HTMLElement | null;
+      
+      if (!reactFlowContainer) {
+        throw new Error("Could not find ReactFlow container");
+      }
+      
+      const originalWidth = reactFlowContainer.style.width;
+      const originalHeight = reactFlowContainer.style.height;
+      
+      reactFlowContainer.style.width = `${reactFlowContainer.scrollWidth}px`;
+      reactFlowContainer.style.height = `${reactFlowContainer.scrollHeight}px`;
+      
+      const canvas = await html2canvas(reactFlowContainer, {
         backgroundColor: null,
         scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: reactFlowContainer.scrollWidth,
+        height: reactFlowContainer.scrollHeight,
+        windowWidth: reactFlowContainer.scrollWidth,
+        windowHeight: reactFlowContainer.scrollHeight,
+        x: 0,
+        y: 0,
       });
       
-      // Create a download link
+      reactFlowContainer.style.width = originalWidth;
+      reactFlowContainer.style.height = originalHeight;
+      
       const link = document.createElement('a');
       link.download = `${owner}-${repo}-visualization.png`;
       link.href = canvas.toDataURL('image/png');
@@ -139,28 +160,54 @@ const Visualization = () => {
       return;
     }
     try {
-      // Import html2canvas and jsPDF dynamically
       const html2canvasModule = await import('html2canvas');
       const html2canvas = html2canvasModule.default;
       const jsPDFModule = await import('jspdf');
       
-      // Create a canvas from the graph element
-      const canvas = await html2canvas(graphRef.current, {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const reactFlowContainer = graphRef.current.querySelector('.react-flow') as HTMLElement | null;
+      
+      if (!reactFlowContainer) {
+        throw new Error("Could not find ReactFlow container");
+      }
+      
+      const originalWidth = reactFlowContainer.style.width;
+      const originalHeight = reactFlowContainer.style.height;
+      
+      reactFlowContainer.style.width = `${reactFlowContainer.scrollWidth}px`;
+      reactFlowContainer.style.height = `${reactFlowContainer.scrollHeight}px`;
+      
+      const canvas = await html2canvas(reactFlowContainer, {
         backgroundColor: null,
         scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: reactFlowContainer.scrollWidth,
+        height: reactFlowContainer.scrollHeight,
+        windowWidth: reactFlowContainer.scrollWidth,
+        windowHeight: reactFlowContainer.scrollHeight,
+        x: 0,
+        y: 0,
       });
       
-      // Create a new PDF document
+      reactFlowContainer.style.width = originalWidth;
+      reactFlowContainer.style.height = originalHeight;
+      
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const aspectRatio = imgWidth / imgHeight;
+      
       const pdf = new jsPDFModule.jsPDF({
-        orientation: 'landscape',
+        orientation: aspectRatio > 1 ? 'landscape' : 'portrait',
         unit: 'px',
-        format: [canvas.width, canvas.height]
+        format: [imgWidth, imgHeight]
       });
       
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       
-      // Save the PDF
       pdf.save(`${owner}-${repo}-visualization.pdf`);
       
       toast({
@@ -542,8 +589,7 @@ const Visualization = () => {
               </Button>
             </div>
 
-            {/* Important: Add the ref to this div that contains the visualization */}
-            <div ref={graphRef} className="w-full h-full bg-secondary/10 rounded-lg border border-muted">
+            <div ref={graphRef} className="w-full h-full bg-secondary/10 rounded-lg border border-muted" data-visualization-container>
               {repoData && (
                 <RepoGraphVisualization 
                   repoData={repoData} 

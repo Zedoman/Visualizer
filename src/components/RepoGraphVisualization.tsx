@@ -332,6 +332,7 @@ const RepoGraphVisualization = ({
         onNodeClick={handleNodeClick}
         fitView
         attributionPosition="bottom-right"
+        className="react-flow-export-target"
       >
         <Controls />
         <MiniMap 
