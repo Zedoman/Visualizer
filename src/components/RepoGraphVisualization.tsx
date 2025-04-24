@@ -80,6 +80,11 @@ const RepoGraphVisualization = ({
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
     
+    // Calculate optimal node spacing based on structure size
+    const nodeCount = countTotalNodes(structure);
+    const baseNodeSpacing = Math.max(150, 800 / Math.max(1, Math.sqrt(nodeCount / 2)));
+    const levelSpacing = 100;
+    
     const repoName = `${repoData.owner}/${repoData.repo}`;
     const rootNodeWidth = calculateTextWidth(repoName, 16, 24); // fontSize 16, padding 24 (12px each side)
 
@@ -108,14 +113,25 @@ const RepoGraphVisualization = ({
       },
     });
 
+    // Function to count the total number of nodes in a structure
+    function countTotalNodes(items: any[]): number {
+      let count = items.length;
+      for (const item of items) {
+        if (item.children && item.children.length > 0) {
+          count += countTotalNodes(item.children);
+        }
+      }
+      return count;
+    }
+
     const addNodesAndEdges = (items: any[], parentId: string, startY: number = 120, startX: number = 0, level: number = 0) => {
-      const nodeSpacing = 330;
-      const levelSpacing = 150;
+      const nodeSpacing = baseNodeSpacing - (level * 10); // Reduce spacing for deeper levels
       
-      const levelWidth = items.length * nodeSpacing;
-      const startingX = startX - levelWidth / 2 + nodeSpacing / 2;
+      const itemsWidth = items.length * nodeSpacing;
+      const startingX = startX - itemsWidth / 2 + nodeSpacing / 2;
       
-      items.forEach((item, index) => {
+      for (let index = 0; index < items.length; index++) {
+        const item = items[index];
         const nodeId = item.path || `${parentId}-${index}`;
         const isSelected = selectedFile === item.path;
         const childWidth = calculateTextWidth(item.name, 12, 16); // fontSize 12, padding 16 (8px each side)
@@ -154,6 +170,8 @@ const RepoGraphVisualization = ({
             color = isDarkMode ? '#3B82F6' : '#2563EB';
           } else if (item.name.endsWith('.rb')) {
             color = isDarkMode ? '#EF4444' : '#DC2626';
+          } else if (item.name.endsWith('.sol')) {
+            color = isDarkMode ? '#6D28D9' : '#4C1D95';
           }
           
           nodeStyle = {
@@ -171,7 +189,10 @@ const RepoGraphVisualization = ({
           };
         }
         
-        const xPos = startingX + index * nodeSpacing;
+        // Calculate position with fan-out layout
+        const itemsAtThisLevel = items.length;
+        const horizontalMultiplier = itemsAtThisLevel > 1 ? index - (itemsAtThisLevel - 1) / 2 : 0;
+        const xPos = startX + horizontalMultiplier * nodeSpacing;
         const yPos = startY + level * levelSpacing;
         
         newNodes.push({
@@ -199,9 +220,10 @@ const RepoGraphVisualization = ({
         });
         
         if (item.children && item.children.length > 0) {
-          addNodesAndEdges(item.children, nodeId, startY, xPos, level + 1);
+          // With this recursive approach each parent's children are centered under it
+          addNodesAndEdges(item.children, nodeId, startY + levelSpacing, xPos, level + 1);
         }
-      });
+      }
     };
     
     if (structure && structure.length > 0) {
@@ -246,9 +268,11 @@ const RepoGraphVisualization = ({
     const fileTypes = repoData.fileTypes;
     const totalFileTypes = fileTypes.length || 8;
     
+    // Spread the file types in a larger circle to avoid overlaps
+    const radius = Math.max(250, 100 + totalFileTypes * 10);
+    
     fileTypes.forEach((ext, index) => {
       const angle = (index * 360 / totalFileTypes) * Math.PI / 180;
-      const radius = 250;
       const x = 250 + radius * Math.cos(angle);
       const y = 250 + radius * Math.sin(angle);
       const extWidth = calculateTextWidth(`.${ext}`, 12, 16);
@@ -279,6 +303,9 @@ const RepoGraphVisualization = ({
       } else if (ext === 'rb') {
         color = isDarkMode ? '#EF4444' : '#DC2626';
         bgColor = isDarkMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)';
+      } else if (ext === 'sol') {
+        color = isDarkMode ? '#6D28D9' : '#4C1D95';
+        bgColor = isDarkMode ? 'rgba(109, 40, 217, 0.1)' : 'rgba(109, 40, 217, 0.2)';
       }
       
       const isSelected = selectedFile && selectedFile.endsWith(`.${ext}`);
@@ -320,9 +347,10 @@ const RepoGraphVisualization = ({
     setNodes(newNodes);
     setEdges(newEdges);
   };
+  
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full react-flow-graph-visualization">
       <ReactFlow
         nodes={nodes}
         edges={edges}

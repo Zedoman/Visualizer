@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, Filter, ZoomIn, ZoomOut, Maximize, FileText, FileImage, File } from 'lucide-react';
@@ -34,7 +35,7 @@ const Visualization = () => {
 
       setIsLoading(true);
       
-      const storedData = localStorage.getItem('repoData');
+      const storedData = localStorage.getItem(`repoData-${owner}-${repo}`);
       
       if (storedData) {
         try {
@@ -56,7 +57,7 @@ const Visualization = () => {
         
         if (data) {
           setRepoData(data);
-          localStorage.setItem('repoData', JSON.stringify(data));
+          localStorage.setItem(`repoData-${owner}-${repo}`, JSON.stringify(data));
         } else {
           toast({
             title: "Error",
@@ -97,20 +98,24 @@ const Visualization = () => {
       const html2canvasModule = await import('html2canvas');
       const html2canvas = html2canvasModule.default;
       
+      // Wait for all animations to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const reactFlowContainer = graphRef.current.querySelector('.react-flow') as HTMLElement | null;
+      const reactFlowContainer = graphRef.current.querySelector('.react-flow-graph-visualization .react-flow') as HTMLElement | null;
       
       if (!reactFlowContainer) {
         throw new Error("Could not find ReactFlow container");
       }
       
+      // Save original dimensions
       const originalWidth = reactFlowContainer.style.width;
       const originalHeight = reactFlowContainer.style.height;
       
+      // Set dimensions for export
       reactFlowContainer.style.width = `${reactFlowContainer.scrollWidth}px`;
       reactFlowContainer.style.height = `${reactFlowContainer.scrollHeight}px`;
       
+      // Render to canvas
       const canvas = await html2canvas(reactFlowContainer, {
         backgroundColor: null,
         scale: 2,
@@ -125,9 +130,11 @@ const Visualization = () => {
         y: 0,
       });
       
+      // Restore original dimensions
       reactFlowContainer.style.width = originalWidth;
       reactFlowContainer.style.height = originalHeight;
       
+      // Export the image
       const link = document.createElement('a');
       link.download = `${owner}-${repo}-visualization.png`;
       link.href = canvas.toDataURL('image/png');
@@ -164,20 +171,24 @@ const Visualization = () => {
       const html2canvas = html2canvasModule.default;
       const jsPDFModule = await import('jspdf');
       
+      // Wait for all animations to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const reactFlowContainer = graphRef.current.querySelector('.react-flow') as HTMLElement | null;
+      const reactFlowContainer = graphRef.current.querySelector('.react-flow-graph-visualization .react-flow') as HTMLElement | null;
       
       if (!reactFlowContainer) {
         throw new Error("Could not find ReactFlow container");
       }
       
+      // Save original dimensions
       const originalWidth = reactFlowContainer.style.width;
       const originalHeight = reactFlowContainer.style.height;
       
+      // Set dimensions for export
       reactFlowContainer.style.width = `${reactFlowContainer.scrollWidth}px`;
       reactFlowContainer.style.height = `${reactFlowContainer.scrollHeight}px`;
       
+      // Render to canvas
       const canvas = await html2canvas(reactFlowContainer, {
         backgroundColor: null,
         scale: 2,
@@ -192,9 +203,11 @@ const Visualization = () => {
         y: 0,
       });
       
+      // Restore original dimensions
       reactFlowContainer.style.width = originalWidth;
       reactFlowContainer.style.height = originalHeight;
       
+      // Export the PDF with proper dimensions
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const aspectRatio = imgWidth / imgHeight;
@@ -391,6 +404,7 @@ const Visualization = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Recursive function to render the file tree with proper indentation and hierarchy
   const renderFileTree = (structure: RepoStructure[] = []) => {
     return (
       <ul className="space-y-1 text-sm">
@@ -400,7 +414,11 @@ const Visualization = () => {
               className={`flex items-center py-1 px-2 rounded cursor-pointer ${selectedFile?.path === item.path ? 'bg-secondary' : 'hover:bg-secondary/20'}`}
               onClick={() => handleFileClick(item)}
             >
-              <span className={`mr-2 h-4 w-4 ${getIconForType(item.type)}`}></span>
+              {item.type === 'directory' ? (
+                <FolderIcon className="mr-2 h-4 w-4 text-blue-500" />
+              ) : (
+                <FileIcon className="mr-2 h-4 w-4" type={item.type} />
+              )}
               <span>{item.name}</span>
               {item.type !== 'directory' && (
                 <span className="ml-auto text-xs text-muted-foreground">
@@ -419,7 +437,19 @@ const Visualization = () => {
     );
   };
 
-  const getIconForType = (type: string) => {
+  // Component for file icon
+  const FileIcon = ({ className, type }: { className: string, type: string }) => {
+    // Choose icon class based on file type
+    const iconClass = getIconClassForType(type);
+    return <span className={`${className} ${iconClass}`}></span>;
+  };
+
+  // Component for folder icon
+  const FolderIcon = ({ className }: { className: string }) => {
+    return <span className={className}>📁</span>;
+  };
+
+  const getIconClassForType = (type: string) => {
     switch (type) {
       case 'directory':
         return 'text-blue-500';
@@ -439,11 +469,14 @@ const Visualization = () => {
         return 'text-red-500';
       case 'html':
         return 'text-orange-600';
+      case 'solidity':
+        return 'text-purple-600';
       default:
         return 'text-gray-500';
     }
   };
 
+  // Get unique file types from repo data
   const uniqueFileTypes = repoData?.fileTypes?.length
     ? repoData.fileTypes
     : (
@@ -492,6 +525,10 @@ const Visualization = () => {
     );
   }
 
+  // Show repository statistics
+  const fileCount = repoData.fileCount || 0;
+  const dirCount = repoData.dirCount || 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="py-4 px-4 border-b border-muted backdrop-blur-sm bg-background/80 sticky top-0 z-50">
@@ -504,6 +541,9 @@ const Visualization = () => {
             <h1 className="text-xl font-bold">
               {owner}/{repo}
             </h1>
+            <div className="text-xs text-muted-foreground">
+              {fileCount} files • {dirCount} directories
+            </div>
           </div>
         </div>
       </header>
@@ -596,6 +636,7 @@ const Visualization = () => {
                   visualizationType={activeTab as 'structure' | 'dependencies'} 
                   selectedFile={selectedFile?.path}
                   onNodeClick={(node) => {
+                    // Find the file in our structure that matches the clicked node
                     const findFile = (structure: RepoStructure[], path: string): RepoStructure | null => {
                       for (const item of structure) {
                         if (item.path === path) {

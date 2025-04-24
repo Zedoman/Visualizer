@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 
 // For browser environments, we need to handle environment variables differently
@@ -65,6 +66,8 @@ export const fetchRepoStructure = async (owner: string, repo: string): Promise<R
         structure,
         dependencies: analyzeDependencies(structure),
         fileTypes,
+        fileCount: countFiles(structure),
+        dirCount: countDirectories(structure),
       };
       
       // Add file usage information
@@ -84,6 +87,8 @@ export const fetchRepoStructure = async (owner: string, repo: string): Promise<R
       structure,
       dependencies: analyzeDependencies(structure),
       fileTypes,
+      fileCount: countFiles(structure),
+      dirCount: countDirectories(structure),
     };
     
     // Add file usage information
@@ -99,6 +104,46 @@ export const fetchRepoStructure = async (owner: string, repo: string): Promise<R
     });
     return null;
   }
+};
+
+/**
+ * Count total files in structure
+ */
+const countFiles = (structure: RepoStructure[]): number => {
+  let count = 0;
+  
+  const countInNode = (node: RepoStructure) => {
+    if (node.type !== 'directory') {
+      count++;
+    }
+    
+    if (node.children) {
+      node.children.forEach(countInNode);
+    }
+  };
+  
+  structure.forEach(countInNode);
+  return count;
+};
+
+/**
+ * Count total directories in structure
+ */
+const countDirectories = (structure: RepoStructure[]): number => {
+  let count = 0;
+  
+  const countInNode = (node: RepoStructure) => {
+    if (node.type === 'directory') {
+      count++;
+    }
+    
+    if (node.children) {
+      node.children.forEach(countInNode);
+    }
+  };
+  
+  structure.forEach(countInNode);
+  return count;
 };
 
 /**
@@ -129,8 +174,8 @@ const processRepoStructure = (tree: any[]): RepoStructure[] => {
   console.log("Processing repository structure");
   const result: RepoStructure[] = [];
   const map: Record<string, RepoStructure> = {};
-
-  // Create nodes for all items
+  
+  // First pass: create all nodes
   tree.forEach((item) => {
     const path = item.path;
     const pathParts = path.split('/');
@@ -140,29 +185,55 @@ const processRepoStructure = (tree: any[]): RepoStructure[] => {
       name,
       path,
       type: item.type === 'blob' ? getFileType(name) : 'directory',
-      size: item.size || 0, // Include file size from GitHub API
+      size: item.size || 0,
       children: [],
     };
   });
-
-  // Build the tree structure
+  
+  // Second pass: create all directory nodes that might be missing
   tree.forEach((item) => {
     const path = item.path;
     const pathParts = path.split('/');
     
+    // Create parent directories if they don't exist
+    let currentPath = '';
+    
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+      const newPath = currentPath ? `${currentPath}/${part}` : part;
+      
+      if (!map[newPath]) {
+        map[newPath] = {
+          name: part,
+          path: newPath,
+          type: 'directory',
+          children: [],
+        };
+      }
+      
+      currentPath = newPath;
+    }
+  });
+  
+  // Third pass: build the tree structure
+  Object.values(map).forEach((node) => {
+    const pathParts = node.path.split('/');
+    
     if (pathParts.length === 1) {
       // Root level item
-      result.push(map[path]);
+      result.push(node);
     } else {
       // Has parent
       const parentPath = pathParts.slice(0, -1).join('/');
       if (map[parentPath]) {
-        map[parentPath].children = map[parentPath].children || [];
-        map[parentPath].children.push(map[path]);
+        if (!map[parentPath].children) {
+          map[parentPath].children = [];
+        }
+        map[parentPath].children!.push(node);
       }
     }
   });
-
+  
   console.log(`Built structure with ${result.length} root items`);
   return result;
 };
@@ -215,6 +286,7 @@ const getFileType = (filename: string): string => {
     docx: 'document',
     xls: 'spreadsheet',
     xlsx: 'spreadsheet',
+    sol: 'solidity',
   };
   
   return fileTypes[extension] || 'file';
@@ -229,7 +301,7 @@ const analyzeDependencies = (structure: RepoStructure[]): Record<string, string[
   // Simplified dependency analysis - in a real app, this would parse file contents
   // This is a placeholder implementation
   const processNode = (node: RepoStructure) => {
-    if (node.type === 'javascript' || node.type === 'typescript') {
+    if (node.type === 'javascript' || node.type === 'typescript' || node.type === 'solidity') {
       dependencies[node.path] = [];
     }
     
@@ -266,14 +338,15 @@ const addFileUsageInfo = (repoData: RepositoryData) => {
   
   // Analyze code for imports and references (simplified)
   const analyzeFileReferences = (node: RepoStructure) => {
-    if (node.type === 'javascript' || node.type === 'typescript') {
-      // For JS/TS files, analyze imports
+    if (node.type === 'javascript' || node.type === 'typescript' || node.type === 'solidity') {
+      // For JS/TS/SOL files, analyze imports
       Object.keys(fileRefs).forEach(filePath => {
         if (filePath !== node.path && 
            (filePath.endsWith('.js') || 
             filePath.endsWith('.jsx') || 
             filePath.endsWith('.ts') || 
-            filePath.endsWith('.tsx'))) {
+            filePath.endsWith('.tsx') ||
+            filePath.endsWith('.sol'))) {
           // Simplified: Assume files in the same directory might import each other
           const importProbability = Math.random();
           if (importProbability > 0.7) {
