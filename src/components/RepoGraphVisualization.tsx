@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
@@ -20,7 +21,7 @@ type RepositoryData = {
   fileTypes: string[];
   fileCount?: number;
   dirCount?: number;
-  dependencies?: Array<{ name: string; version?: string }>;
+  dependencies: Record<string, string[]>; // Updated to match githubService
 };
 
 type NodeData = {

@@ -17,8 +17,10 @@ export interface RepositoryData {
   owner: string;
   repo: string;
   structure: RepoStructure[];
-  dependencies: Record<string, string[]>;
+  dependencies: Record<string, string[]>; // Changed from Array<{name: string}> to Record
   fileTypes: string[];
+  fileCount?: number;
+  dirCount?: number;
 }
 
 /**
