@@ -13,6 +13,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { useTheme } from '@/components/ThemeProvider';
 
 type RepositoryData = {
   owner: string;
@@ -45,6 +46,8 @@ const RepoGraphVisualization = ({
 }: RepoGraphVisualizationProps) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const onConnect = useCallback((params: any) => {
     setEdges((eds) => addEdge({ ...params, animated: true }, eds));
@@ -71,7 +74,7 @@ const RepoGraphVisualization = ({
     } else {
       generateDependencyVisualization(repoData);
     }
-  }, [repoData, visualizationType, selectedFile]);
+  }, [repoData, visualizationType, selectedFile, isDarkMode]);
 
   const generateStructureVisualization = (structure: any[]) => {
     const newNodes: Node[] = [];
@@ -89,16 +92,18 @@ const RepoGraphVisualization = ({
       },
       position: { x: 250, y: 0 },
       style: { 
-        background: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))',
-        border: '2px solid #8B5CF6',
+        background: isDarkMode 
+          ? 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))' 
+          : 'linear-gradient(to right, rgba(139, 92, 246, 0.7), rgba(20, 184, 166, 0.7))',
+        border: isDarkMode ? '2px solid #8B5CF6' : '2px solid #6D28D9',
         borderRadius: '8px',
         width: rootNodeWidth,
         padding: 12,
-        color: '#FFFFFF',
+        color: isDarkMode ? '#FFFFFF' : '#1F2937',
         fontWeight: 'bold',
         fontSize: 16,
         textAlign: 'center' as const,
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        textShadow: isDarkMode ? '1px 1px 2px rgba(0,0,0,0.5)' : '1px 1px 2px rgba(255,255,255,0.5)',
         whiteSpace: 'nowrap' as const
       },
     });
@@ -118,48 +123,50 @@ const RepoGraphVisualization = ({
         let nodeStyle = {};
         if (item.type === 'directory') {
           nodeStyle = {
-            background: isSelected ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.1)',
-            borderColor: isSelected ? '#8B5CF6' : '#8B5CF6',
+            background: isSelected 
+              ? (isDarkMode ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.5)') 
+              : (isDarkMode ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.2)'),
+            borderColor: isSelected ? '#8B5CF6' : (isDarkMode ? '#8B5CF6' : '#6D28D9'),
             borderWidth: isSelected ? 2 : 1,
             borderRadius: '8px',
             width: childWidth,
             padding: 8,
-            color: '#FFFFFF',
+            color: isDarkMode ? '#FFFFFF' : '#1F2937',
             fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+            textShadow: isDarkMode ? '1px 1px 2px rgba(0,0,0,0.5)' : 'none',
             whiteSpace: 'nowrap' as const
           };
         } else {
-          let color = '#94A3B8';
-          let textColor = '#FFFFFF';
+          let color = isDarkMode ? '#94A3B8' : '#64748B';
+          let textColor = isDarkMode ? '#FFFFFF' : '#1F2937';
           if (item.name.endsWith('.js') || item.name.endsWith('.jsx')) {
-            color = '#F59E0B';
-            textColor = '#FFFFFF';
+            color = isDarkMode ? '#F59E0B' : '#D97706';
+            textColor = isDarkMode ? '#FFFFFF' : '#1F2937';
           } else if (item.name.endsWith('.ts') || item.name.endsWith('.tsx')) {
-            color = '#3B82F6';
+            color = isDarkMode ? '#3B82F6' : '#2563EB';
           } else if (item.name.endsWith('.css') || item.name.endsWith('.scss')) {
-            color = '#EC4899';
+            color = isDarkMode ? '#EC4899' : '#DB2777';
           } else if (item.name.endsWith('.json')) {
-            color = '#10B981';
+            color = isDarkMode ? '#10B981' : '#059669';
           } else if (item.name.endsWith('.md')) {
-            color = '#6366F1';
+            color = isDarkMode ? '#6366F1' : '#4F46E5';
           } else if (item.name.endsWith('.py')) {
-            color = '#3B82F6';
+            color = isDarkMode ? '#3B82F6' : '#2563EB';
           } else if (item.name.endsWith('.rb')) {
-            color = '#EF4444';
+            color = isDarkMode ? '#EF4444' : '#DC2626';
           }
           
           nodeStyle = {
             borderColor: color,
             borderWidth: isSelected ? 3 : 1,
-            backgroundColor: isSelected ? `${color}15` : 'transparent',
+            backgroundColor: isSelected ? `${color}15` : (isDarkMode ? 'transparent' : `${color}05`),
             boxShadow: isSelected ? `0 0 0 2px ${color}40` : 'none',
             borderRadius: '4px',
             width: childWidth,
             padding: 8,
             color: textColor,
             fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+            textShadow: isDarkMode ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none',
             whiteSpace: 'nowrap' as const
           };
         }
@@ -184,7 +191,9 @@ const RepoGraphVisualization = ({
             height: 15,
           },
           style: { 
-            stroke: isSelected ? '#8B5CF6' : '#CBD5E1',
+            stroke: isSelected 
+              ? '#8B5CF6' 
+              : (isDarkMode ? '#CBD5E1' : '#94A3B8'),
             strokeWidth: isSelected ? 2 : 1,
           },
         });
@@ -215,8 +224,10 @@ const RepoGraphVisualization = ({
       data: { label: repoName, type: 'main', selected: false },
       position: { x: 175, y: 100 },
       style: { 
-        background: 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))',
-        border: '2px solid #8B5CF6',
+        background: isDarkMode 
+          ? 'linear-gradient(to right, rgba(139, 92, 246, 0.3), rgba(20, 184, 166, 0.3))' 
+          : 'linear-gradient(to right, rgba(139, 92, 246, 0.7), rgba(20, 184, 166, 0.7))',
+        border: isDarkMode ? '2px solid #8B5CF6' : '2px solid #6D28D9',
         borderRadius: '50%',
         width: rootNodeWidth,
         height: rootNodeWidth,
@@ -225,9 +236,9 @@ const RepoGraphVisualization = ({
         alignItems: 'center',
         textAlign: 'center' as const,
         padding: 12,
-        color: '#FFFFFF',
+        color: isDarkMode ? '#FFFFFF' : '#1F2937',
         fontWeight: 'bold',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        textShadow: isDarkMode ? '1px 1px 2px rgba(0,0,0,0.5)' : 'none',
         whiteSpace: 'nowrap' as const
       },
     });
@@ -242,23 +253,32 @@ const RepoGraphVisualization = ({
       const y = 250 + radius * Math.sin(angle);
       const extWidth = calculateTextWidth(`.${ext}`, 12, 16);
       
-      let color = '#94A3B8';
-      let textColor = '#FFFFFF';
+      let color = isDarkMode ? '#94A3B8' : '#64748B';
+      let textColor = isDarkMode ? '#FFFFFF' : '#1F2937';
+      let bgColor = 'rgba(20, 184, 166, 0.1)';
+      
       if (['js', 'jsx'].includes(ext)) {
-        color = '#F59E0B';
-        textColor = '#000000';
+        color = isDarkMode ? '#F59E0B' : '#D97706';
+        bgColor = isDarkMode ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.2)';
+        textColor = isDarkMode ? '#FFFFFF' : '#1F2937';
       } else if (['ts', 'tsx'].includes(ext)) {
-        color = '#3B82F6';
+        color = isDarkMode ? '#3B82F6' : '#2563EB';
+        bgColor = isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)';
       } else if (['css', 'scss', 'less'].includes(ext)) {
-        color = '#EC4899';
+        color = isDarkMode ? '#EC4899' : '#DB2777';
+        bgColor = isDarkMode ? 'rgba(236, 72, 153, 0.1)' : 'rgba(236, 72, 153, 0.2)';
       } else if (ext === 'json') {
-        color = '#10B981';
+        color = isDarkMode ? '#10B981' : '#059669';
+        bgColor = isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.2)';
       } else if (ext === 'md') {
-        color = '#6366F1';
+        color = isDarkMode ? '#6366F1' : '#4F46E5';
+        bgColor = isDarkMode ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.2)';
       } else if (ext === 'py') {
-        color = '#3B82F6';
+        color = isDarkMode ? '#3B82F6' : '#2563EB';
+        bgColor = isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)';
       } else if (ext === 'rb') {
-        color = '#EF4444';
+        color = isDarkMode ? '#EF4444' : '#DC2626';
+        bgColor = isDarkMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)';
       }
       
       const isSelected = selectedFile && selectedFile.endsWith(`.${ext}`);
@@ -268,7 +288,7 @@ const RepoGraphVisualization = ({
         data: { label: `.${ext}`, type: 'dependency', selected: isSelected },
         position: { x, y },
         style: {
-          background: isSelected ? `${color}20` : 'rgba(20, 184, 166, 0.1)',
+          background: isSelected ? `${color}20` : bgColor,
           borderColor: color,
           borderWidth: isSelected ? 3 : 1,
           boxShadow: isSelected ? `0 0 0 2px ${color}40` : 'none',
@@ -277,7 +297,7 @@ const RepoGraphVisualization = ({
           padding: 8,
           color: textColor,
           fontWeight: 'bold',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+          textShadow: isDarkMode ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none',
           whiteSpace: 'nowrap' as const
         }
       });
@@ -288,7 +308,7 @@ const RepoGraphVisualization = ({
         target: ext,
         animated: true,
         style: { 
-          stroke: isSelected ? color : '#8B5CF6',
+          stroke: isSelected ? color : (isDarkMode ? '#8B5CF6' : '#6D28D9'),
           strokeWidth: isSelected ? 2 : 1,
         },
         markerEnd: {
@@ -316,16 +336,21 @@ const RepoGraphVisualization = ({
         <Controls />
         <MiniMap 
           style={{
-            backgroundColor: 'rgba(35, 42, 65, 0.8)',
-            borderRadius: '8px'
+            backgroundColor: isDarkMode ? 'rgba(35, 42, 65, 0.8)' : 'rgba(241, 245, 249, 0.8)',
+            borderRadius: '8px',
+            border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)'
           }}
           nodeColor={(n) => {
-            if (n.id === 'root') return '#8b5cf6';
-            if (n.data?.type === 'directory') return '#7c3aed';
-            return '#3b82f6';
+            if (n.id === 'root' || n.id === 'main') return isDarkMode ? '#8b5cf6' : '#6D28D9';
+            if (n.data?.type === 'directory') return isDarkMode ? '#7c3aed' : '#6D28D9';
+            return isDarkMode ? '#3b82f6' : '#2563EB';
           }}
         />
-        <Background color="#f8f8f8" gap={16} variant={BackgroundVariant.Dots} />
+        <Background 
+          color={isDarkMode ? "#f8f8f8" : "#64748B"} 
+          gap={16} 
+          variant={BackgroundVariant.Dots} 
+        />
       </ReactFlow>
     </div>
   );

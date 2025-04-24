@@ -27,7 +27,7 @@ const Step: React.FC<StepProps> = ({
   return (
     <div className="flex">
       <div className="flex flex-col items-center">
-        <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-atlas-purple bg-atlas-purple/10 text-white relative z-10">
+      <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-atlas-purple bg-atlas-purple/10 text-atlas-purple relative z-10">
           {icon}
         </div>
         {!isLast && (
@@ -124,10 +124,14 @@ const HowItWorks = () => {
           display: flex;
           align-items: center;
           padding: 0.5rem 0.75rem;
-          background-color: rgba(10, 25, 47, 0.7);
+          background-color: rgba(255, 255, 255, 0.85);
           border-radius: 2rem;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           backdrop-filter: blur(4px);
+        }
+
+        .dark .process-node {
+          background-color: rgba(10, 25, 47, 0.7);
         }
         
         @keyframes flowPathAnimation {
