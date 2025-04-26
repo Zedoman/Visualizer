@@ -5,6 +5,7 @@ import { ArrowLeft, Download, Filter, ZoomIn, ZoomOut, Maximize, FileText, FileI
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RepositoryData, fetchRepoStructure } from '@/services/githubService';
+import { ChevronRight } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import VisualizationLoader from '@/components/VisualizationLoader';
 import RepoGraphVisualization from '@/components/RepoGraphVisualization';
@@ -20,6 +21,7 @@ const Visualization = () => {
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const graphRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -79,6 +81,19 @@ const Visualization = () => {
 
     loadData();
   }, [owner, repo, navigate]);
+
+  useEffect(() => {
+    if (repoData) {
+      // Expand the root folders by default
+      const initiallyExpanded = repoData.structure.reduce((acc, item) => {
+        if (item.type === 'directory') {
+          acc[item.path] = true;
+        }
+        return acc;
+      }, {} as Record<string, boolean>);
+      setExpandedFolders(initiallyExpanded);
+    }
+  }, [repoData]);
 
   const handleBackClick = () => {
     navigate('/');
@@ -404,6 +419,13 @@ const Visualization = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const toggleFolder = (path: string) => {
+    setExpandedFolders(prev => ({
+      ...prev,
+      [path]: !prev[path]
+    }));
+  };
+
   // Recursive function to render the file tree with proper indentation and hierarchy
   const renderFileTree = (structure: RepoStructure[] = []) => {
     return (
@@ -412,10 +434,21 @@ const Visualization = () => {
           <li key={item.path} className="pl-2">
             <div 
               className={`flex items-center py-1 px-2 rounded cursor-pointer ${selectedFile?.path === item.path ? 'bg-secondary' : 'hover:bg-secondary/20'}`}
-              onClick={() => handleFileClick(item)}
+              onClick={() => {
+                if (item.type === 'directory') {
+                  toggleFolder(item.path);
+                } else {
+                  handleFileClick(item);
+                }
+              }}
             >
               {item.type === 'directory' ? (
-                <FolderIcon className="mr-2 h-4 w-4 text-blue-500" />
+                <>
+                  <ChevronRight 
+                    className={`mr-1 h-4 w-4 transition-transform ${expandedFolders[item.path] ? 'transform rotate-90' : ''}`}
+                  />
+                  <FolderIcon className="mr-1 h-4 w-4 text-blue-500" />
+                </>
               ) : (
                 <FileIcon className="mr-2 h-4 w-4" type={item.type} />
               )}
@@ -426,7 +459,7 @@ const Visualization = () => {
                 </span>
               )}
             </div>
-            {item.children && item.children.length > 0 && (
+            {item.children && item.children.length > 0 && expandedFolders[item.path] && (
               <ul className="pl-4 space-y-1 mt-1">
                 {renderFileTree(item.children)}
               </ul>

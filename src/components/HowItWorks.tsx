@@ -73,7 +73,7 @@ const ProcessVisualization = () => {
             <div className="w-10 h-10 rounded-full bg-atlas-purple flex items-center justify-center">
               <GitBranch size={20} className="text-white" />
             </div>
-            <span className="ml-2 font-medium text-white">Input GitHub URL</span>
+            <span className="ml-2 font-medium text-atlas-purple">Input GitHub URL</span>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ const ProcessVisualization = () => {
             <div className="w-10 h-10 rounded-full bg-atlas-purple flex items-center justify-center">
               <Database size={20} className="text-white" />
             </div>
-            <span className="ml-2 font-medium text-white">Fetch Repository</span>
+            <span className="ml-2 font-medium text-atlas-purple">Fetch Repository</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@ const ProcessVisualization = () => {
             <div className="w-10 h-10 rounded-full bg-atlas-purple flex items-center justify-center">
               <Code size={20} className="text-white" />
             </div>
-            <span className="ml-2 font-medium text-white">Parse Code</span>
+            <span className="ml-2 font-medium text-atlas-purple">Parse Code</span>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ const ProcessVisualization = () => {
             <div className="w-10 h-10 rounded-full bg-atlas-teal flex items-center justify-center">
               <Layers3 size={20} className="text-white" />
             </div>
-            <span className="ml-2 font-medium text-white">Generate Visualization</span>
+            <span className="ml-2 font-medium text-atlas-purple">Generate Visualization</span>
           </div>
         </div>
 
