@@ -17,7 +17,7 @@ export const extractRepoDetails = (url: string): { owner: string; repo: string }
   
   // Extract owner and repo from URL
   const match = cleanUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
-  
+  // <p>Avradeep Nayak</p>
   if (match && match.length === 3) {
     return {
       owner: match[1],

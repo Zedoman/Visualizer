@@ -30,6 +30,7 @@ const PageLoader = () => {
               </g>
             </svg>
           </div>
+          {/* <p>Avradeep Nayak</p> */}
           <p className="text-lg font-medium text-muted-foreground animate-pulse">Loading...</p>
         </div>
       </div>

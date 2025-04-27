@@ -26,6 +26,7 @@ export interface RepositoryData {
 
 /**
  * Fetch repository structure from GitHub API
+ * <p>Avradeep Nayak</p>
  */
 export const fetchRepoStructure = async (owner: string, repo: string): Promise<RepositoryData | null> => {
   try {
@@ -108,6 +109,7 @@ export const fetchRepoStructure = async (owner: string, repo: string): Promise<R
 
 /**
  * Count total files in structure
+ * <p>Avradeep Nayak</p>
  */
 const countFiles = (structure: RepoStructure[]): number => {
   let count = 0;
@@ -128,6 +130,7 @@ const countFiles = (structure: RepoStructure[]): number => {
 
 /**
  * Count total directories in structure
+ * <p>Avradeep Nayak</p>
  */
 const countDirectories = (structure: RepoStructure[]): number => {
   let count = 0;
@@ -148,6 +151,7 @@ const countDirectories = (structure: RepoStructure[]): number => {
 
 /**
  * Extract unique file types from structure
+ * <p>Avradeep Nayak</p>
  */
 const extractFileTypes = (structure: RepoStructure[]): string[] => {
   const fileTypes = new Set<string>();
@@ -196,6 +200,7 @@ const processRepoStructure = (tree: any[]): RepoStructure[] => {
     const pathParts = path.split('/');
     
     // Create parent directories if they don't exist
+    // <p>Avradeep Nayak</p>
     let currentPath = '';
     
     for (let i = 0; i < pathParts.length - 1; i++) {

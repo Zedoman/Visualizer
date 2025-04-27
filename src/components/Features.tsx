@@ -14,6 +14,7 @@ const FeatureCard = ({ icon, title, description, diagram }: FeatureProps) => {
     <div className="group relative h-[280px] perspective-1000">
       <div className="absolute inset-0 transition-all duration-500 ease-out preserve-3d group-hover:my-rotate-y-180">
         {/* Front of card */}
+        {/* <p>Avradeep Nayak</p> */}
         <div className="absolute inset-0 backface-hidden border border-muted rounded-lg bg-secondary/20 p-6 flex flex-col items-center">
           <div className="mb-4 text-atlas-purple">
             {icon}

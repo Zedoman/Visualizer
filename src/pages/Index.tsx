@@ -54,6 +54,7 @@ const Index = () => {
             </div>
             <div className="text-muted-foreground text-sm mt-4 md:mt-0">
               <p>© {new Date().getFullYear()} Source Code Atlas • Map your code like never before</p>
+              <p>Avradeep Nayak</p>
             </div>
           </div>
         </div>
