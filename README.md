@@ -2,6 +2,12 @@
 
 A powerful web application for visualizing and analyzing GitHub repository structures, dependencies, and relationships.
 
+
+
+https://github.com/user-attachments/assets/cdc49925-9fc3-438d-9a25-71e0ad36a11a
+
+
+
 ## 🚀 Features
 
 - **Repository Structure Visualization**: Interactive visual representation of your codebase's file structure
