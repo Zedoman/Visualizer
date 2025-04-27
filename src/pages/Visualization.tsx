@@ -19,6 +19,7 @@ const Visualization = () => {
   const [selectedFile, setSelectedFile] = useState<RepoStructure | null>(null);
   const [fileCode, setFileCode] = useState<string | null>(null);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const graphRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
@@ -98,6 +99,34 @@ const Visualization = () => {
   const handleBackClick = () => {
     navigate('/');
   };
+
+  const toggleFullScreen = () => {
+    if (!graphRef.current) return;
+
+    if (!isFullScreen) {
+      if (graphRef.current.requestFullscreen) {
+        graphRef.current.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+    setIsFullScreen(!isFullScreen);
+  };
+
+  const handleFullScreenChange = () => {
+    if (!document.fullscreenElement) {
+      setIsFullScreen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    };
+  }, []);
 
   const exportAsPNG = async () => {
     console.log("Exporting as PNG, graph ref:", graphRef.current);
@@ -657,7 +686,12 @@ const Visualization = () => {
               <Button variant="outline" size="sm">
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleFullScreen}
+                disabled={isFullScreen}
+              >
                 <Maximize className="h-4 w-4" />
               </Button>
             </div>
@@ -689,6 +723,18 @@ const Visualization = () => {
                     }
                   }}
                 />
+              )}
+              {isFullScreen && (
+                <div className="absolute top-4 right-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleFullScreen}
+                    className="bg-background/80 backdrop-blur-sm"
+                  >
+                    Close Full Screen
+                  </Button>
+                </div>
               )}
             </div>
           </div>

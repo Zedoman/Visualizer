@@ -82,11 +82,11 @@ const RepoGraphVisualization = ({
     
     // Calculate optimal node spacing based on structure size
     const nodeCount = countTotalNodes(structure);
-    const baseNodeSpacing = Math.max(150, 800 / Math.max(1, Math.sqrt(nodeCount / 2)));
-    const levelSpacing = 100;
+    const baseNodeSpacing = Math.max(500, 1000 / Math.max(1, Math.sqrt(nodeCount / 2))); // Increased spacing
+    const levelSpacing = 150; // Increased vertical spacing
     
     const repoName = `${repoData.owner}/${repoData.repo}`;
-    const rootNodeWidth = calculateTextWidth(repoName, 16, 24); // fontSize 16, padding 24 (12px each side)
+    const rootNodeWidth = calculateTextWidth(repoName, 16, 24);
 
     newNodes.push({
       id: 'root',
